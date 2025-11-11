@@ -150,8 +150,21 @@ async def search(browser_manager, user_input):
         await page.close()
     soup = BeautifulSoup(content, "html.parser")
     results = soup.select(".postDiv")
-    tit_url = [(i.select_one(".h1").text.strip(), i.a["href"]) for i in results if i.select_one(".h1") and i.a]
-    return dict(tit_url)
+    tit_url = []
+    os.makedirs(".cache", exist_ok=True)
+    for idx, i in enumerate(results):
+        if i.select_one(".h1") and i.a:
+            try:
+                image_filename = os.path.join(".cache", os.path.basename(str(idx))+'.jpg')
+                r = requests.get(i.find('img')['data-src'], timeout=10)
+                with open(image_filename, "wb") as f:
+                    f.write(r.content)
+            except:
+                image_filename = None
+
+            tit_url.append((i.select_one(".h1").text.strip(), i.a["href"], image_filename))
+
+    return tit_url
 
 async def extract_seasons(browser_manager, series_url):
     base_url = "https://web184.faselhd.cafe"
@@ -331,15 +344,20 @@ async def De3vil():
                     console.print("[red]No results found.[/red]")
                     continue
                 console.print("\n[magenta]Search results:[/magenta]")
-                items = list(search_results.items())
-                for idx, (title, url) in enumerate(items, 1):
+                items = search_results
+                for idx, (title, url, image) in enumerate(items, 1):
                     console.print(f"[blue]{idx}[/blue][red]:[/red][white] {title}[/white]")
+                    try:
+                        subprocess.run([r"Chafa.exe", image, "--size=10x20"], check=True)
+                    except Exception:
+                        continue
+                    os.system("")
                 try:
                     choice = int(console.input("\nChoose a number: ")) - 1
-                    selected_title, selected_url = items[choice]
+                    selected_title, selected_url, selected_image = items[choice]
                 except (ValueError, IndexError):
                     console.print("[red]Invalid selection![/red]")
-                    continue
+                    continue                
                 seasons = await extract_seasons(browser_manager, selected_url)
                 current_series = {'title': selected_title, 'url': selected_url, 'seasons': seasons}
                 is_movie = not bool(seasons)
