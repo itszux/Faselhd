@@ -23,7 +23,7 @@ from playwright.async_api import async_playwright
 
 console = Console()
 
-os.system('start chrome fb.com/De3vil.3')
+#os.system('start chrome fb.com/De3vil.3')
 
 def download_and_extract_zip(url, extract_to):
     response = requests.get(url, stream=True)
